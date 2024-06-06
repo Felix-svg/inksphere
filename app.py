@@ -42,7 +42,7 @@ def login():
         return make_response({"error":"Internal Server Error: " + str(e)}, 500)
 
 
-@app.route('/logout')
+@app.route('/logout', methods=['GET', 'POST'])
 @login_required
 def logout():
     logout_user()
