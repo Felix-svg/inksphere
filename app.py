@@ -31,7 +31,7 @@ def login():
 
         user = User.query.filter(User.email == email).first()
 
-        if user and User.check_password(password):
+        if user and user.check_password(password):
             login_user(user)
             return make_response({"message": "Logged in successfully"}, 200)
         else:
