@@ -1,5 +1,6 @@
 from flask import make_response, request
-from config import bcrypt
+from config import bcrypt, api
+from flask_restful import Resource
 from flask_login import login_required, logout_user, login_user
 from config import app, db, login_manager
 from models import User, Blog, Comment
@@ -42,10 +43,48 @@ def login():
 
 
 @app.route('/logout')
-#@login_required
+@login_required
 def logout():
     logout_user()
     return make_response({"message":"Logged out successfully"}, 200)
+
+
+class Blogs(Resource):
+        def get(self):
+            try:
+                blogs = []
+
+                for blog in Blog.query.all():
+                    blogs.append(blog.to_dict(rules=['-user', '-comments']))
+
+                return make_response({"blogs": blogs}, 200)
+            except Exception as e:
+                return make_response({"error": str(e)}, 400)
+
+        @login_required()
+        def post(self):
+            try:
+                data = request.get_json()
+                if not data:
+                    return make_response({"error": "No input data provided"}, 400)
+
+                title = data.get('title')
+                content = data.get('content')
+                user_id = data.get('user_id')
+
+                if not title or not content or not user_id:
+                    return make_response({"error": "Title, content, and user_id are required"}, 400)
+
+                new_blog = Blog(title=title, content=content, user_id=user_id)
+                db.session.add(new_blog)
+                db.session.commit()
+                return make_response({"message": "Blog created successfully"}, 201)
+            except Exception as e:
+                db.session.rollback()
+                return make_response({"error": str(e)}, 400)
+
+
+api.add_resource(Blogs, "/blogs")
 
 @app.route('/blogs', methods=['GET', 'POST'])
 def blogs():
@@ -85,6 +124,7 @@ def blogs():
 
 
 @app.route('/blogs/<int:id>', methods=['GET', 'DELETE', 'PATCH'])
+@login_required
 def blog_by_id(id):
     try:
         blog = Blog.query.filter(Blog.id==id).first()
@@ -134,6 +174,7 @@ def blog_by_id(id):
 
 
 @app.route('/users', methods=['GET', 'POST'])
+@login_required
 def users():
     try:
         if request.method == 'GET':
@@ -172,6 +213,7 @@ def users():
 
 
 @app.route('/users/<int:id>', methods=['GET', 'PATCH', 'DELETE'])
+@login_required
 def user_by_id(id):
     try:
         user = User.query.filter(User.id==id).first()
@@ -221,6 +263,7 @@ def user_by_id(id):
 
 
 @app.route('/comments', methods=['GET', 'POST'])
+@login_required
 def comments():
     try:
         if request.method == 'GET':
@@ -258,6 +301,7 @@ def comments():
 
 
 @app.route('/comments/<int:id>', methods=['GET', 'PATCH', 'DELETE'])
+@login_required
 def comment_by_id(id):
     try:
         comment = Comment.query.filter(Comment.id==id).first()
