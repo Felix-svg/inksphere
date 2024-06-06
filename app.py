@@ -86,41 +86,41 @@ class Blogs(Resource):
 
 api.add_resource(Blogs, "/blogs")
 
-@app.route('/blogs', methods=['GET', 'POST'])
-def blogs():
-    try:
-        if request.method == 'GET':
-            try:
-                blogs = []
-
-                for blog in Blog.query.all():
-                    blogs.append(blog.to_dict(rules=['-user', '-comments']))
-
-                return make_response({"blogs": blogs}, 200)
-            except Exception as e:
-                return make_response({"error":str(e)}, 400)
-        elif request.method == 'POST':
-            try:
-                data = request.get_json()
-                if not data:
-                    return make_response({"error":"No input data provided"}, 400)
-
-                title = data.get('title')
-                content = data.get('content')
-                user_id = data.get('user_id')
-
-                if not title or not content or not user_id:
-                    return make_response({"error":"Title, content, and user_id are required"}, 400)
-
-                new_blog = Blog(title=title, content=content, user_id=user_id)
-                db.session.add(new_blog)
-                db.session.commit()
-                return make_response({"message":"Blog created successfully"}, 201)
-            except Exception as e:
-                db.session.rollback()
-                return make_response({"error": str(e)},400)
-    except Exception as e:
-        return make_response({'error':'Internal Server Error: ' + str(e)}, 500)
+# @app.route('/blogs', methods=['GET', 'POST'])
+# def blogs():
+#     try:
+#         if request.method == 'GET':
+#             try:
+#                 blogs = []
+#
+#                 for blog in Blog.query.all():
+#                     blogs.append(blog.to_dict(rules=['-user', '-comments']))
+#
+#                 return make_response({"blogs": blogs}, 200)
+#             except Exception as e:
+#                 return make_response({"error":str(e)}, 400)
+#         elif request.method == 'POST':
+#             try:
+#                 data = request.get_json()
+#                 if not data:
+#                     return make_response({"error":"No input data provided"}, 400)
+#
+#                 title = data.get('title')
+#                 content = data.get('content')
+#                 user_id = data.get('user_id')
+#
+#                 if not title or not content or not user_id:
+#                     return make_response({"error":"Title, content, and user_id are required"}, 400)
+#
+#                 new_blog = Blog(title=title, content=content, user_id=user_id)
+#                 db.session.add(new_blog)
+#                 db.session.commit()
+#                 return make_response({"message":"Blog created successfully"}, 201)
+#             except Exception as e:
+#                 db.session.rollback()
+#                 return make_response({"error": str(e)},400)
+#     except Exception as e:
+#         return make_response({'error':'Internal Server Error: ' + str(e)}, 500)
 
 
 @app.route('/blogs/<int:id>', methods=['GET', 'DELETE', 'PATCH'])
