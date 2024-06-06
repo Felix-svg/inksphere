@@ -11,6 +11,7 @@ class User(db.Model, SerializerMixin, UserMixin):
     email = db.Column(db.String(120), nullable=False, unique=True)
     password_hash = db.Column(db.String(180), nullable=False)
     created_at = db.Column(db.DateTime, server_default=db.func.now())
+    updated_at = db.Column(db.DateTime, onupdate=db.func.now())
 
     # Relationship with Blog and Comment
     blogs = db.relationship("Blog", back_populates="user", cascade="all, delete-orphan")

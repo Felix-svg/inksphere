@@ -7,7 +7,7 @@ from models import User, Blog, Comment
 
 @app.route('/', methods=['GET'])
 def home():
-    return make_response({"message": "InkSpace API"})
+    return make_response({"message": "InkSphere API"})
 
 
 @login_manager.user_loader
@@ -96,7 +96,6 @@ def blog_by_id(id):
                 blog_dict = blog.to_dict(rules=['-user', '-comments'])
                 return make_response({"blog":blog_dict}, 200)
             except Exception as e:
-                db.session.rollback()
                 return make_response({"error":str(e)}, 400)
         elif request.method == 'PATCH':
             try:
@@ -141,7 +140,7 @@ def users():
             try:
                 users = []
                 for user in User.query.all():
-                    users.append(user.to_dict(rules=['-blogs', '-comments']))
+                    users.append(user.to_dict(rules=['-blogs', '-comments', '-password_hash']))
                 return make_response({"users":users}, 200)
             except Exception as e:
                 db.session.rollback()
@@ -160,7 +159,7 @@ def users():
                     return make_response({"error": "Username, email, and password are required"}, 400)
 
                 hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
-                new_user = User(username=username, email=email, password=hashed_password)
+                new_user = User(username=username, email=email, password_hash=hashed_password)
                 db.session.add(new_user)
                 db.session.commit()
 
@@ -184,7 +183,6 @@ def user_by_id(id):
                 user_dict = user.to_dict(rules=['-blogs', '-comments', '-password_hash'])
                 return make_response({"user":user_dict}, 200)
             except Exception as e:
-                db.session.rollback()
                 return make_response({"error":str(e)}, 400)
         elif request.method == 'PATCH':
             try:
@@ -220,6 +218,88 @@ def user_by_id(id):
                 return make_response({"error":"Failed to delete user: " + str(e)}, 400)
     except Exception as e:
         return make_response({"error":"Internal Server Error: " + str(e)}, 500)
+
+
+@app.route('/comments', methods=['GET', 'POST'])
+def comments():
+    try:
+        if request.method == 'GET':
+            try:
+                comments = []
+
+                for comment in Comment.query.all():
+                    comments.append(comment.to_dict(rules=['user','blog']))
+                return make_response({"comments":comments}, 200)
+            except Exception as e:
+                return make_response({"error":str(e)}, 400)
+        elif request.method == 'POST':
+            try:
+                data = request.get_json()
+                if not data:
+                    return make_response({"error":"No data input provided"}, 400)
+
+                content = data.get('content')
+                user_id = data.get('user_id')
+                blog_id = data.get('blog_id')
+
+                if not content or not user_id or not blog_id:
+                    return make_response({"error":"Content, user_id, and blog_id must be provided"}, 400)
+
+                new_comment = Comment(content=content, user_id=user_id, blog_id=blog_id)
+                db.session.add(new_comment)
+                db.session.commit()
+                return make_response({"message":"Comment posted successfuly"}, 201)
+
+            except Exception as e:
+                db.session.rollback()
+                return make_response({"error":str(e)}, 400)
+    except Exception as e:
+        return make_response({"error":"Internal Server Error: " + str(e)}, 500)
+
+
+@app.route('/comments/<int:id>', methods=['GET', 'PATCH', 'DELETE'])
+def comment_by_id(id):
+    try:
+        comment = Comment.query.filter(Comment.id==id).first()
+
+        if not comment:
+            return make_response({"error": "Comment not found"}, 404)
+
+        if request.method == 'GET':
+            try:
+                comment_dict = comment.to_dict(rules=['user', 'blog'])
+                return make_response({"comment":comment_dict}, 200)
+            except Exception as e:
+                return make_response({"error":str(e)}, 400)
+        elif request.method == 'PATCH':
+            try:
+                data = request.get_json()
+
+                if not data:
+                    return make_response({"error":"No input data provided"}, 400)
+
+                content = data.get('content')
+                if content is not None:
+                    comment.content = content
+
+                db.session.commit()
+                return make_response({"message": "Comment updated successfully"}, 200)
+            except Exception as e:
+                db.session.rollback()
+                return make_response({"error": "Failed to update comment: " + str(e)}, 400)
+        elif request.method == 'DELETE':
+            try:
+                db.session.delete(comment)
+                db.session.commit()
+
+                return make_response({"message":"Comment deleted succssfully"}, 200)
+            except Exception as e:
+                db.session.rollback()
+                return make_response({"error":"Failed to delete comment: " + str(e)}, 400)
+
+    except Exception as e:
+        return make_response({"error":"Internal Server Error: " + str(e)}, 500)
+
 
 
 if __name__ == '__main__':
