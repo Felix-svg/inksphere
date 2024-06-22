@@ -6,6 +6,16 @@ name = "pypi"
 [packages]
 gunicorn = "*"
 psycopg2-binary = "*"
+flask = "*"
+flask-migrate = "*"
+sqlalchemy = "*"
+flask-sqlalchemy = "*"
+flask-cors = "*"
+flask-restful = "*"
+flask-bcrypt = "*"
+flask-login = "*"
+python-dotenv = "*"
+faker = "*"
 
 [dev-packages]
 

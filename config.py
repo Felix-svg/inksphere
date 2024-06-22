@@ -13,8 +13,8 @@ load_dotenv()
 
 app = Flask(__name__)
 
-app.secret_key = "6b5ee3ccd68845fb7a10663397b4bcee625d50e8da65109ba9874d998a6d9a02"
-#app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///inksphere.db"
+app.secret_key = b"\xbc.r\xa8\xb5T!\xd1>\x08}\xc8\xd9\xd7\x84\xa9"
+# app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///inksphere.db"
 app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URI")
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.json.compact = False
@@ -34,4 +34,3 @@ login_manager.init_app(app)
 CORS(app)
 bcrypt = Bcrypt(app)
 api = Api(app)
-
